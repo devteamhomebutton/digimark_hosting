@@ -111,7 +111,7 @@ router.post('/clients/:client_id/content', authenticate, async (req, res, next) 
     const { title, content_type, platform, secondary_platforms = [], scheduled_date, scheduled_time,
             description, caption, reference_url, status = 'draft', vertical_id, task_category } = req.body;
 
-    const [result] = await require('../database').pool.execute(
+    const [result] = await require('../database').pool.query(
       `INSERT INTO contents (client_id, title, content_type, platform, secondary_platforms,
        scheduled_date, description, caption, reference_url, status, vertical_id, task_category,
        created_by, is_deleted, created_at, updated_at)

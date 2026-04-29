@@ -39,7 +39,7 @@ router.post('/clients/:client_id/verticals', authenticate, async (req, res, next
     if (!client) throw new NotFoundError('Client');
 
     const { name, color = '#6366F1', sort_order = 0 } = req.body;
-    const [result] = await db.pool.execute(
+    const [result] = await db.pool.query(
       'INSERT INTO verticals (client_id, name, color, sort_order, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, NOW(), NOW())',
       [req.params.client_id, name, color, sort_order]
     );

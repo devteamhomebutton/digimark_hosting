@@ -19,7 +19,7 @@ router.post('/register', async (req, res, next) => {
     const userRole = validRoles.includes(role) ? role : 'team_member';
 
     const hashed = hashPassword(password);
-    const [result] = await require('../database').pool.execute(
+    const [result] = await require('../database').pool.query(
       'INSERT INTO users (email, hashed_password, full_name, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, NOW(), NOW())',
       [email, hashed, full_name, userRole]
     );

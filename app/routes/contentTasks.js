@@ -114,12 +114,12 @@ router.post('/content/:content_id/tasks', authenticate, async (req, res, next) =
     const { title, description, stage, assigned_to, assigned_to_ids, due_date, notes, order, drive_url } = req.body;
     const primaryId = assigned_to_ids && assigned_to_ids.length ? assigned_to_ids[0] : assigned_to;
 
-    const [result] = await db.pool.execute(
+    const [result] = await db.pool.query(
       `INSERT INTO tasks (task_type, content_id, client_id, title, description, stage, assigned_to, assigned_by,
        due_date, notes, drive_url, \`order\`, status, is_deleted, created_at, updated_at)
        VALUES ('content', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NOW(), NOW())`,
       [req.params.content_id, content.client_id, title, description || null, stage,
-       primaryId || null, req.user.id, due_date, notes || null, drive_url || null, order || 0]
+       primaryId || null, req.user.id, due_date || new Date().toISOString().slice(0, 10), notes || null, drive_url || null, order || 0]
     );
 
     const ids = assigned_to_ids || (assigned_to ? [assigned_to] : []);
@@ -161,7 +161,7 @@ router.post('/content/:content_id/tasks/pipeline', authenticate, async (req, res
 
     const created = [];
     for (const s of stagesData) {
-      const [result] = await db.pool.execute(
+      const [result] = await db.pool.query(
         `INSERT INTO tasks (task_type, content_id, client_id, title, stage, task_category,
          assigned_by, due_date, \`order\`, status, is_deleted, created_at, updated_at)
          VALUES ('content', ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NOW(), NOW())`,

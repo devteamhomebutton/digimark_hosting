@@ -31,7 +31,7 @@ router.post('/', authenticate, async (req, res, next) => {
     const existing = await queryOne('SELECT id FROM clients WHERE slug = ?', [slug]);
     if (existing) slug = `${slug}-${Date.now()}`;
 
-    const [result] = await require('../database').pool.execute(
+    const [result] = await require('../database').pool.query(
       'INSERT INTO clients (name, slug, platforms, description, logo_url, created_by, status, is_deleted, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NOW(), NOW())',
       [name, slug, JSON.stringify(platforms), description || null, logo_url || null, req.user.id, 'active']
     );

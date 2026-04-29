@@ -221,12 +221,12 @@ router.post('/daily/bulk', authenticate, async (req, res, next) => {
     const { client_id, tasks: taskList } = req.body;
     const created = [];
     for (const td of taskList) {
-      const [result] = await db.pool.execute(
+      const [result] = await db.pool.query(
         `INSERT INTO tasks (task_type, client_id, title, description, stage, assigned_to, assigned_by,
          due_date, notes, \`order\`, status, is_deleted, created_at, updated_at)
          VALUES ('general', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NOW(), NOW())`,
         [client_id, td.title, td.description || null, td.stage, td.assigned_to || null,
-         req.user.id, td.due_date, td.notes || null, td.order || 0]
+         req.user.id, td.due_date || new Date().toISOString().slice(0, 10), td.notes || null, td.order || 0]
       );
       const task = await queryOne(`SELECT ${TASK_SELECT} ${TASK_JOINS} WHERE t.id = ?`, [result.insertId]);
       created.push(task);
@@ -275,13 +275,14 @@ router.post('/general', authenticate, async (req, res, next) => {
     }
 
     const primaryId = assigned_to_ids && assigned_to_ids.length ? assigned_to_ids[0] : assigned_to;
+    const resolvedDueDate = due_date || new Date().toISOString().slice(0, 10);
 
-    const [result] = await db.pool.execute(
+    const [result] = await db.pool.query(
       `INSERT INTO tasks (task_type, content_id, client_id, vertical_id, title, description, stage,
        task_category, assigned_to, assigned_by, due_date, \`order\`, notes, status, is_deleted, created_at, updated_at)
        VALUES ('general', NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'pending', 0, NOW(), NOW())`,
       [resolvedClientId, vertical_id || null, title, description || null, category,
-       task_category || null, primaryId || null, req.user.id, due_date, notes || null]
+       task_category || null, primaryId || null, req.user.id, resolvedDueDate, notes || null]
     );
 
     const taskId = result.insertId;
@@ -295,12 +296,12 @@ router.post('/general', authenticate, async (req, res, next) => {
         [task_category]
       );
       for (let i = 0; i < stages.length; i++) {
-        await db.pool.execute(
+        await db.pool.query(
           `INSERT INTO tasks (task_type, content_id, parent_task_id, client_id, vertical_id, title, stage,
            task_category, assigned_to, assigned_by, due_date, \`order\`, status, is_deleted, created_at, updated_at)
            VALUES ('general', NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NOW(), NOW())`,
           [taskId, resolvedClientId, vertical_id || null, stages[i].stage_name, stages[i].stage_name,
-           task_category, assigned_to || null, req.user.id, due_date, i + 1]
+           task_category, assigned_to || null, req.user.id, resolvedDueDate, i + 1]
         );
       }
     }
@@ -335,12 +336,12 @@ router.post('/general/from-template', authenticate, async (req, res, next) => {
 
     const created = [];
     for (let i = 0; i < stages.length; i++) {
-      const [result] = await db.pool.execute(
+      const [result] = await db.pool.query(
         `INSERT INTO tasks (task_type, content_id, client_id, vertical_id, title, stage, task_category,
          assigned_to, assigned_by, due_date, \`order\`, status, is_deleted, created_at, updated_at)
          VALUES ('general', NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NOW(), NOW())`,
         [resolvedClientId, vertical_id || null, `${project_title} — ${stages[i].stage_name}`,
-         stages[i].stage_name, task_category, assigned_to || null, req.user.id, due_date, i + 1]
+         stages[i].stage_name, task_category, assigned_to || null, req.user.id, due_date || new Date().toISOString().slice(0, 10), i + 1]
       );
       const task = await queryOne(`SELECT ${TASK_SELECT} ${TASK_JOINS} WHERE t.id = ?`, [result.insertId]);
       created.push(task);
@@ -393,13 +394,13 @@ router.post('/general/:task_id/stages', authenticate, async (req, res, next) => 
     const { title, stage, due_date, assigned_to, assigned_to_ids, notes, description, order, drive_url } = req.body;
     const primaryId = assigned_to_ids && assigned_to_ids.length ? assigned_to_ids[0] : assigned_to;
 
-    const [result] = await db.pool.execute(
+    const [result] = await db.pool.query(
       `INSERT INTO tasks (task_type, content_id, parent_task_id, client_id, vertical_id, title, stage,
        description, task_category, assigned_to, assigned_by, due_date, notes, drive_url, \`order\`, status, is_deleted, created_at, updated_at)
        VALUES ('general', NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NOW(), NOW())`,
       [req.params.task_id, parent.client_id, parent.vertical_id, title, stage,
        description || null, parent.task_category, primaryId || null, req.user.id,
-       due_date, notes || null, drive_url || null, order || 0]
+       due_date || new Date().toISOString().slice(0, 10), notes || null, drive_url || null, order || 0]
     );
 
     const ids = assigned_to_ids || (assigned_to ? [assigned_to] : []);
@@ -424,7 +425,7 @@ router.post('/general/:task_id/stages/pipeline', authenticate, async (req, res, 
 
     const created = [];
     for (let i = 0; i < stages.length; i++) {
-      const [result] = await db.pool.execute(
+      const [result] = await db.pool.query(
         `INSERT INTO tasks (task_type, content_id, parent_task_id, client_id, vertical_id, title, stage,
          task_category, assigned_to, assigned_by, due_date, \`order\`, status, is_deleted, created_at, updated_at)
          VALUES ('general', NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NOW(), NOW())`,

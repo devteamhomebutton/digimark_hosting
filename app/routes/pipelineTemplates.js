@@ -38,7 +38,7 @@ router.post('/pipeline-templates/categories', authenticate, async (req, res, nex
     if (existing) throw new AppError(`Category '${name}' already exists`, 'CONFLICT', 409);
 
     const [countRow] = await query('SELECT COUNT(*) AS cnt FROM task_categories');
-    await db.pool.execute(
+    await db.pool.query(
       'INSERT INTO task_categories (name, color, is_default, sort_order) VALUES (?, ?, 0, ?)',
       [name, req.body.color || '#64748B', (countRow.cnt || 0) + 1]
     );
@@ -76,7 +76,7 @@ router.post('/stage-library', authenticate, async (req, res, next) => {
     if (name.length > 100) throw new AppError('Stage name too long', 'VALIDATION_ERROR', 422);
     const existing = await queryOne('SELECT id FROM stage_library WHERE name = ?', [name]);
     if (existing) throw new AppError(`Stage '${name}' already exists in library`, 'CONFLICT', 409);
-    const [result] = await db.pool.execute('INSERT INTO stage_library (name) VALUES (?)', [name]);
+    const [result] = await db.pool.query('INSERT INTO stage_library (name) VALUES (?)', [name]);
     res.status(201).json({ id: result.insertId, name });
   } catch (err) { next(err); }
 });
@@ -131,7 +131,7 @@ router.put('/pipeline-templates/:category', authenticate, async (req, res, next)
     for (let i = 0; i < stageNames.length; i++) {
       const name = (stageNames[i] || '').trim();
       if (!name) continue;
-      await db.pool.execute(
+      await db.pool.query(
         'INSERT INTO pipeline_templates (task_category, stage_name, stage_order, is_active, created_by, created_at, updated_at) VALUES (?, ?, ?, 1, ?, NOW(), NOW())',
         [req.params.category, name, i + 1, req.user.id]
       );
@@ -154,7 +154,7 @@ router.post('/pipeline-templates/:category/reset', authenticate, async (req, res
     await query('DELETE FROM pipeline_templates WHERE task_category = ?', [req.params.category]);
     const defaults = DEFAULT_STAGES[req.params.category] || [];
     for (let i = 0; i < defaults.length; i++) {
-      await db.pool.execute(
+      await db.pool.query(
         'INSERT INTO pipeline_templates (task_category, stage_name, stage_order, is_active, created_by, created_at, updated_at) VALUES (?, ?, ?, 1, ?, NOW(), NOW())',
         [req.params.category, defaults[i], i + 1, req.user.id]
       );

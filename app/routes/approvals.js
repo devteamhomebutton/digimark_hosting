@@ -49,7 +49,7 @@ router.post('/', authenticate, async (req, res, next) => {
     const task = await queryOne('SELECT id FROM tasks WHERE id = ? AND is_deleted = 0', [task_id]);
     if (!task) throw new NotFoundError('Task');
 
-    const [result] = await db.pool.execute(
+    const [result] = await db.pool.query(
       `INSERT INTO task_approvals (task_id, requested_by_id, approver_id, approval_type, message, status, created_at)
        VALUES (?, ?, ?, ?, ?, 'pending', NOW())`,
       [task_id, req.user.id, approver_id, approval_type, message || null]

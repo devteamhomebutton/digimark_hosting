@@ -70,7 +70,7 @@ router.post('/import/content/:client_id', authenticate, upload.single('file'), a
       const verticalName = (row.vertical_name || '').trim().toLowerCase();
       const verticalId = vertMap[verticalName] || null;
 
-      await db.pool.execute(
+      await db.pool.query(
         `INSERT INTO contents (client_id, title, content_type, platform, secondary_platforms, scheduled_date,
          status, description, vertical_id, created_by, is_deleted, created_at, updated_at)
          VALUES (?, ?, ?, ?, '[]', ?, ?, ?, ?, ?, 0, NOW(), NOW())`,
@@ -124,7 +124,7 @@ router.post('/import/tasks/general/:client_id', authenticate, upload.single('fil
       const assignedTo = userMap[email] || null;
       const notes = row.notes || null;
 
-      await db.pool.execute(
+      await db.pool.query(
         `INSERT INTO tasks (task_type, content_id, client_id, title, stage, assigned_to, assigned_by,
          due_date, notes, \`order\`, status, is_deleted, created_at, updated_at)
          VALUES ('general', NULL, ?, ?, ?, ?, ?, ?, ?, 0, 'pending', 0, NOW(), NOW())`,

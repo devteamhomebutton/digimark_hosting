@@ -25,7 +25,7 @@ router.post('/invite', authenticate, async (req, res, next) => {
     const validRoles = ['admin', 'manager', 'sm_specialist', 'seo_specialist', 'graphic_designer', 'team_member'];
     const userRole = validRoles.includes(role) ? role : 'team_member';
 
-    const [result] = await db.pool.execute(
+    const [result] = await db.pool.query(
       'INSERT INTO users (email, hashed_password, full_name, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, NOW(), NOW())',
       [email, hashPassword(password), full_name, userRole]
     );
