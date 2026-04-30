@@ -240,14 +240,12 @@ router.post('/daily/bulk', authenticate, async (req, res, next) => {
 router.get('/general', authenticate, async (req, res, next) => {
   try {
     const { vertical_id, client_id, assigned_to, status } = req.query;
-    const isAdmin = ['admin', 'manager'].includes(req.user.role);
     let sql = `SELECT ${TASK_SELECT} ${TASK_JOINS}
                WHERE t.content_id IS NULL AND t.parent_task_id IS NULL AND t.is_deleted = 0`;
     const params = [];
     if (vertical_id) { sql += ' AND t.vertical_id = ?'; params.push(vertical_id); }
     else if (client_id) { sql += ' AND t.client_id = ?'; params.push(client_id); }
     if (assigned_to) { sql += ' AND t.assigned_to = ?'; params.push(assigned_to); }
-    else if (!isAdmin) { sql += ' AND t.assigned_to = ?'; params.push(req.user.id); }
     if (status) { sql += ' AND t.status = ?'; params.push(status); }
     sql += ' ORDER BY t.`order`, t.due_date';
 
